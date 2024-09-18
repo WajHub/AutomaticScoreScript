@@ -42,10 +42,10 @@ class Team:
     def points(self, points):
         self._points = points
 
-
 # --------------------DATA------------------------------------------
 
 URL = "https://superliga.com.pl/matches_new.php?id="
+
 HOME_PLAYER_SOURCE = "NazwaGospGracz"
 GUEST_PLAYER_SOURCE = "NazwaGoscGracz"
 HOME_SCORE_SOURCE = "WynikGosp"
@@ -54,8 +54,10 @@ HOME_SETS_SOURCE = "SetyGosp"
 GUEST_SETS_SOURCE = "SetyGosc"
 HOME_POINTS_SOURCE = "PunktyGosp"
 GUEST_POINTS_SOURCE = "PunktyGosc"
-TICKS_DISPLAY_NEW_SET = 4
-TICKS_DISPLAY_NEW_SINGLE_GAME = 6
+
+TIMER_TICK = 3000
+TICKS_DISPLAY_NEW_SET = 5
+TICKS_DISPLAY_NEW_SINGLE_GAME = 12
 
 idMatch = 0 
 is_running = False
@@ -88,13 +90,32 @@ def script_load(settings):
     Called on script load. This is called when the script is loaded and
     initialized.
     """
-    obs.timer_add(update, 3000)
+    global TIMER_TICK
+    obs.timer_add(update, TIMER_TICK)
 
 def script_update(settings):
     """
     Called when the script’s settings (if any) have been changed by the user.
     """
     set_idMatch(settings)
+
+def set_idMatch(settings):
+    global idMatch
+    if is_running==False:
+        idMatch = obs.obs_data_get_int(settings, "idMatch")
+        print("Setting ID Match: ", idMatch)
+    else:
+        print("Cannot change ID Match while live score is running.")
+
+def start_live_score(props, prop):
+    global is_running
+    is_running = True
+    print("Starting live score...")
+
+def stop_live_score(props, prop):
+    global is_running
+    is_running = False
+    print("Stopping live score...")
 
 # --------------------Functions--------------------------------------
 
@@ -106,7 +127,15 @@ def update():
             print("Error: ", data['tenis_stolowy']['error'])
         else: 
             set_up(data)
-        
+
+def load_data():
+    url_match = URL+str(idMatch)
+    print("Updating score... (IdMatch: ", idMatch, ")")
+    responseXML = urllib.request.urlopen(url_match).read()
+    contentDict = xmltodict.parse(responseXML)
+    print("Data loaded...")
+    return contentDict
+
 def set_up(data):
     global prev_id_single_game, counter_display_new_single_game
     if is_new_single_game(data):
@@ -121,7 +150,46 @@ def set_up(data):
         set_team_score(data)
         set_players_name(data)
         print_info()
+        counter_display_new_single_game = 0 
     print("-------------------------------------------------")
+
+def set_points(data):
+    global home_team, guest_team, counter_display_new_set
+    home_team.points = data['tenis_stolowy']['wynik']['male_punkty_gosp']
+    guest_team.points = data['tenis_stolowy']['wynik']['male_punkty_gosc']
+    if is_new_set(home_team.points, guest_team.points):
+        if counter_display_new_set >= TICKS_DISPLAY_NEW_SET:
+            update_text_gui(HOME_POINTS_SOURCE, "0")
+            update_text_gui(GUEST_POINTS_SOURCE,"0")
+            set_sets(data)
+        else:
+            counter_display_new_set += 1
+            update_text_gui(HOME_POINTS_SOURCE, home_team.points)
+            update_text_gui(GUEST_POINTS_SOURCE, guest_team.points)
+            print(f"Displaying finished set... ({counter_display_new_set}/{TICKS_DISPLAY_NEW_SET})")
+    else:
+        counter_display_new_set = 0
+        update_text_gui(HOME_POINTS_SOURCE, home_team.points)
+        update_text_gui(GUEST_POINTS_SOURCE, guest_team.points)
+
+def set_sets(data):
+    global home_team, guest_team, counter_display_new_set
+    home_team.sets = data['tenis_stolowy']['wynik']['sety_punkty_gosp']
+    guest_team.sets = data['tenis_stolowy']['wynik']['sety_punkty_gosc']
+    if is_new_set(home_team.points, guest_team.points):
+        if counter_display_new_set >= TICKS_DISPLAY_NEW_SET:
+            update_text_gui(HOME_SETS_SOURCE, home_team.sets)
+            update_text_gui(GUEST_SETS_SOURCE, guest_team.sets)
+    else:
+        update_text_gui(HOME_SETS_SOURCE, home_team.sets)
+        update_text_gui(GUEST_SETS_SOURCE, guest_team.sets)
+
+def set_team_score(data):
+    global home_team, guest_team
+    home_team.score = data['tenis_stolowy']['wynik']['duze_punkty_gosp']
+    guest_team.score = data['tenis_stolowy']['wynik']['duze_punkty_gosc']
+    update_text_gui(HOME_SCORE_SOURCE, home_team.score)
+    update_text_gui(GUEST_SCORE_SOURCE, guest_team.score)
 
 def set_players_name(data):
     global home_team, guest_team, prev_id_single_game, is_new_single_game
@@ -131,41 +199,13 @@ def set_players_name(data):
     update_text_gui(HOME_PLAYER_SOURCE, home_team.name)
     update_text_gui(GUEST_PLAYER_SOURCE, guest_team.name)
 
-def set_team_score(data):
-    global home_team, guest_team
-    home_team.score = data['tenis_stolowy']['wynik']['duze_punkty_gosp']
-    guest_team.score = data['tenis_stolowy']['wynik']['duze_punkty_gosc']
-    update_text_gui(HOME_SCORE_SOURCE, home_team.score)
-    update_text_gui(GUEST_SCORE_SOURCE, guest_team.score)
-
-def set_sets(data):
-    global home_team, guest_team, counter_display_new_set
-    home_team.sets = data['tenis_stolowy']['wynik']['sety_punkty_gosp']
-    guest_team.sets = data['tenis_stolowy']['wynik']['sety_punkty_gosc']
-    if is_new_set(home_team.points, guest_team.points):
-        if counter_display_new_set > TICKS_DISPLAY_NEW_SET:
-            update_text_gui(HOME_SETS_SOURCE, home_team.sets)
-            update_text_gui(GUEST_SETS_SOURCE, guest_team.sets)
-    else:
-        update_text_gui(HOME_SETS_SOURCE, home_team.sets)
-        update_text_gui(GUEST_SETS_SOURCE, guest_team.sets)
-
-def set_points(data):
-    global home_team, guest_team, counter_display_new_set
-    home_team.points = data['tenis_stolowy']['wynik']['male_punkty_gosp']
-    guest_team.points = data['tenis_stolowy']['wynik']['male_punkty_gosc']
-    if is_new_set(home_team.points, guest_team.points):
-        if counter_display_new_set > TICKS_DISPLAY_NEW_SET:
-            update_text_gui(HOME_POINTS_SOURCE, "0")
-            update_text_gui(GUEST_POINTS_SOURCE,"0")
-        else:
-            counter_display_new_set += 1
-            update_text_gui(HOME_POINTS_SOURCE, home_team.points)
-            update_text_gui(GUEST_POINTS_SOURCE, guest_team.points)
-            print(f"Displaying finished set... ({counter_display_new_set}/{TICKS_DISPLAY_NEW_SET})")
-    else:
-        update_text_gui(HOME_POINTS_SOURCE, home_team.points)
-        update_text_gui(GUEST_POINTS_SOURCE, guest_team.points)
+def print_info():
+    global home_team, guest_team, prev_id_single_game, counter_display_new_set
+    print("Score updated.", home_team.score, ":", guest_team.score)
+    print("Players: ", home_team.name, " - ", guest_team.name)
+    print("Sets: ", home_team.sets, " - ", guest_team.sets)
+    print("Points: ", home_team.points, " - ", guest_team.points)
+    print("Id prev single game: ", prev_id_single_game)
 
 def is_new_match(home_sets, guest_sets):
     if int(home_sets) > 2 or int(guest_sets) > 2:
@@ -208,38 +248,3 @@ def update_text_gui(source, text):
         obs.obs_source_update(source, settings)
         obs.obs_data_release(settings)
         obs.obs_source_release(source)
-
-def load_data():
-    url_match = URL+str(idMatch)
-    print("Updating score... (IdMatch: ", idMatch, ")")
-    responseXML = urllib.request.urlopen(url_match).read()
-    contentDict = xmltodict.parse(responseXML)
-    print("Data loaded...")
-    return contentDict
-
-def set_idMatch(settings):
-    global idMatch
-    if is_running==False:
-        idMatch = obs.obs_data_get_int(settings, "idMatch")
-        print("Setting ID Match: ", idMatch)
-    else:
-        print("Cannot change ID Match while live score is running.")
-
-def start_live_score(props, prop):
-    global is_running
-    is_running = True
-    print("Starting live score...")
-
-def stop_live_score(props, prop):
-    global is_running
-    is_running = False
-    print("Stopping live score...")
-
-def print_info():
-    global home_team, guest_team, prev_id_single_game, counter_display_new_set
-    print("Score updated.", home_team.score, ":", guest_team.score)
-    print("Players: ", home_team.name, " - ", guest_team.name)
-    print("Sets: ", home_team.sets, " - ", guest_team.sets)
-    print("Points: ", home_team.points, " - ", guest_team.points)
-    print("Id prev single game: ", prev_id_single_game)
-    
