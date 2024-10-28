@@ -4,6 +4,7 @@ import { useQuery } from "react-query";
 import axios from "axios";
 import PlayerComponent from "./components/PlayerComponent";
 import { Player } from "./models/Player.tsx";
+import "bootstrap-icons/font/bootstrap-icons.css";
 
 function Board() {
   const { id } = useParams();
@@ -76,37 +77,42 @@ function Board() {
     }
   }, [data]);
 
-  // const handleLocalStorage = (value: string) => {
-  //   window.localStorage.setItem("klucz", value);
-  //   console.log("Local storage changed!", value);
-  //   window.dispatchEvent(new Event("storage"));
-  // };
+  const handleLocalStorage = (value: string) => {
+    window.localStorage.setItem("klucz", value);
+    console.log("Local storage changed!", value);
+    window.dispatchEvent(new Event("storage"));
+  };
 
-  // window.addEventListener("storage", () => {
-  //   console.log("Change to local storage!");
-  //   // ...
-  // });
-  // handleLocalStorage("left");
-  // const testFunction = () => {
-  //   handleLocalStorage("right");
-  // };
+  window.addEventListener("storage", () => {
+    console.log("Change to local storage!");
+    // ...
+  });
+  handleLocalStorage("left");
+  const testFunction = () => {
+    handleLocalStorage("right");
+  };
 
-  if (error) {
-    console.log("Error:", error);
-    return <span>Error:</span>;
-  }
+  if (isLoading) return <span>Loading...</span>;
 
-  if (isError) {
-    console.log("Error:", error);
-    return <span>Error:</span>;
-  }
+  if (isError) return <span>Error:</span>;
 
   return (
-    <div>
-      Wynik meczu:
-      <PlayerComponent player={playerHome} />
-      <PlayerComponent player={playerAway} />
-      <button className="btn btn-primary">TEST</button>
+    <div className="container-fluid h-100 bg-light m-0 p-0 width-100 ">
+      <div className="row width-100 custom-height-85">
+        <div className="col-6">
+          <PlayerComponent player={playerHome} />
+        </div>
+        <div className="col-6">
+          <PlayerComponent player={playerAway} />
+        </div>
+      </div>
+      <div className="row custom-height-15">
+        <div className="col">
+          <button className="btn btn-primary">
+            <i className="bi bi-arrow-repeat"></i>
+          </button>{" "}
+        </div>
+      </div>
     </div>
   );
 }

@@ -8,7 +8,9 @@ interface PlayerComponentProps {
 function PlayerComponent({ player }: PlayerComponentProps) {
   return (
     <div>
-      Player name: {player.name} Points: {player.points} Sets; {player.sets}
+      Player name: {player.name}
+      Points: {player.points}
+      Sets; {player.sets}
     </div>
   );
 }
