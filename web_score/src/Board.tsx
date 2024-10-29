@@ -31,6 +31,7 @@ function Board() {
     queryFn: async () => {
       try {
         const response = await axios.get(`http://localhost:8080/${id}`);
+        console.log("FETCHING");
         return response.data;
       } catch (err) {
         console.log("Error in queryFn:", err);
@@ -41,7 +42,26 @@ function Board() {
 
   useEffect(() => {
     if (data) {
-      if (data.isNewSet == true) {
+      if (data.isNewSingleGame == true) {
+        console.log("New single game!");
+        console.log(data);
+        setIsFetchingPaused(true);
+        setTimeout(() => {
+          setIsFetchingPaused(false);
+        }, 15000);
+        setPlayerHome({
+          name: data.nameHome,
+          points: data.pointsHome,
+          sets: playerHome.sets,
+          timeOut: playerHome.timeOut,
+        });
+        setPlayerAway({
+          name: data.nameAway,
+          points: data.pointsAway,
+          sets: playerAway.sets,
+          timeOut: playerAway.timeOut,
+        });
+      } else if (data.isNewSet == true) {
         console.log("New set!");
         console.log(data);
         setIsFetchingPaused(true);

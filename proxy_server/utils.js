@@ -41,6 +41,8 @@ export function getSetsGuest(data, numberOfMatch) {
 
 export function getPointsHome(data, numberOfMatch, numberOfSet) {
   const temp = "mecz" + numberOfMatch;
+  console.log("SET number, ", numberOfSet);
+  console.log("TEST", data.tenis_stolowy[temp][0].gosp_punkty[0].split(" ")[2]);
   return data.tenis_stolowy[temp][0].gosp_punkty[0].split(" ")[numberOfSet - 1];
 }
 
