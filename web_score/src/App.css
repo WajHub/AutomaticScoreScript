@@ -6,9 +6,21 @@ html, body, #root {
 }
 
 .custom-height-85 {
-  height: 85%;
+  height: 90%;
 }
 
 .custom-height-15 {
-  height: 15%;
+  height: 10%;
+}
+
+.playerAway {
+  background-color: rgb(78, 31, 31);
+}
+.playerHome {
+  background-color: rgb(24, 24, 59);
+}
+
+.time_out {
+  color: rgb(255, 242, 126);
+  font-size: 1.5em;
 }

@@ -22,6 +22,7 @@ function Board() {
     sets: 0,
     timeOut: false,
   });
+  const [playerHomeOnTheLeft, setPlayerHomeOnTheLeft] = useState(true);
 
   const [isFetchingPaused, setIsFetchingPaused] = useState(false);
 
@@ -78,18 +79,41 @@ function Board() {
   }, [data]);
 
   const handleLocalStorage = (value: string) => {
-    window.localStorage.setItem("klucz", value);
-    console.log("Local storage changed!", value);
-    window.dispatchEvent(new Event("storage"));
+    const currentValue = window.localStorage.getItem("sideHomePlayer");
+    if (currentValue !== value) {
+      window.localStorage.setItem("sideHomePlayer", value);
+      window.dispatchEvent(new Event("storage"));
+    }
   };
 
-  window.addEventListener("storage", () => {
-    console.log("Change to local storage!");
-    // ...
-  });
-  handleLocalStorage("left");
-  const testFunction = () => {
-    handleLocalStorage("right");
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const sideHomePlayer = window.localStorage.getItem("sideHomePlayer");
+      if (sideHomePlayer === "left") {
+        setPlayerHomeOnTheLeft(true);
+      } else if (sideHomePlayer === "right") {
+        setPlayerHomeOnTheLeft(false);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    handleStorageChange();
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  const handleTimeOut = (side: string) => {
+    if (side == "left") {
+      if (playerHomeOnTheLeft)
+        setPlayerHome({ ...playerHome, timeOut: !playerHome.timeOut });
+      else setPlayerAway({ ...playerAway, timeOut: !playerAway.timeOut });
+    } else {
+      if (playerHomeOnTheLeft)
+        setPlayerAway({ ...playerAway, timeOut: !playerAway.timeOut });
+      else setPlayerHome({ ...playerHome, timeOut: !playerHome.timeOut });
+    }
   };
 
   if (isLoading) return <span>Loading...</span>;
@@ -98,19 +122,56 @@ function Board() {
 
   return (
     <div className="container-fluid h-100 bg-light m-0 p-0 width-100 ">
-      <div className="row width-100 custom-height-85">
-        <div className="col-6">
-          <PlayerComponent player={playerHome} />
+      <div className="row width-100 custom-height-85 m-0">
+        <div className="col-6 p-0">
+          {playerHomeOnTheLeft ? (
+            <PlayerComponent player={playerHome} isHome={true} />
+          ) : (
+            <PlayerComponent player={playerAway} isHome={false} />
+          )}
         </div>
-        <div className="col-6">
-          <PlayerComponent player={playerAway} />
+        <div className="col-6 p-0">
+          {playerHomeOnTheLeft ? (
+            <PlayerComponent player={playerAway} isHome={false} />
+          ) : (
+            <PlayerComponent player={playerHome} isHome={true} />
+          )}
         </div>
       </div>
-      <div className="row custom-height-15">
-        <div className="col">
-          <button className="btn btn-primary">
+      <div className="row custom-height-15 m-0 bg-dark align-items-center">
+        <div className="col text-right">
+          <button
+            className="btn btn-secondary "
+            onClick={(e) => {
+              handleTimeOut("left");
+            }}
+          >
+            Time-Out
+          </button>
+        </div>
+        <div className="col text-center p-0">
+          <button
+            className="btn btn-primary"
+            onClick={(e) => {
+              if (playerHomeOnTheLeft) {
+                handleLocalStorage("right");
+              } else {
+                handleLocalStorage("left");
+              }
+            }}
+          >
             <i className="bi bi-arrow-repeat"></i>
           </button>{" "}
+        </div>
+        <div className="col text-left">
+          <button
+            className="btn btn-secondary "
+            onClick={(e) => {
+              handleTimeOut("right");
+            }}
+          >
+            Time-Out
+          </button>
         </div>
       </div>
     </div>
