@@ -1,0 +1,22 @@
+version: '1.0'
+services:
+  web_score:
+    build: ./web_score/
+    ports: 
+      - "5173:5173"
+    networks:
+      - my_network
+    volumes:
+      - ./web_score/src:/app/web_score/src
+  proxy_server:
+    build: ./proxy_server
+    ports:
+      - "8080:8080"
+    networks:
+      - my_network
+    volumes:
+      - ./proxy_server/index.js:/app/proxy_server/index.js
+      - ./proxy_server/utils.js:/app/proxy_server/utils.js
+networks:
+  my_network:
+    driver: bridge
