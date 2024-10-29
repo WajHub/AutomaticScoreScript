@@ -125,6 +125,8 @@ def update():
         data = load_data()
         if "error" in data['tenis_stolowy']:
             print("Error: ", data['tenis_stolowy']['error'])
+        if data['tenis_stolowy']['wynik']['duze_punkty_gosp'] == '':
+            print("Match not started yet.")
         else: 
             set_up(data)
 
