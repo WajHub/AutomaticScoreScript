@@ -6,6 +6,7 @@ import * as utils from "./utils.js";
 
 const app = express();
 const URL = "https://superliga.com.pl/matches_new.php?id=";
+let prevNumberOfMatch = 1;
 let numberOfMatch = 1;
 let prevNumberOfSet = 1;
 let numberOfSet = 1;
@@ -52,8 +53,12 @@ app.get("/:id", async (req, res) => {
       console.log("Home player points: ", pointsHome);
       console.log("Away player points: ", pointsAway);
 
+      let isFinishedMatch = false;
       let isFinishedSet = false;
-      if (prevNumberOfSet !== numberOfSet) {
+      if (prevNumberOfMatch !== numberOfMatch) {
+        isFinishedMatch = true;
+        prevNumberOfMatch = numberOfMatch;
+      } else if (prevNumberOfSet !== numberOfSet) {
         isFinishedSet = true;
         prevNumberOfSet = numberOfSet;
       }
@@ -70,9 +75,29 @@ app.get("/:id", async (req, res) => {
           pointsHome: 0,
           pointsAway: 0,
         });
+      } else if (isFinishedMatch) {
+        res.status(200).send({
+          isNewSet: false,
+          isNewSingleGame: true,
+          nameHome: homePlayerName,
+          nameAway: awayPlayerName,
+          setHome: setsHome,
+          setAway: setsGuest,
+          pointsHome: utils.getPointsHome(
+            resultJson,
+            numberOfMatch - 1,
+            prevNumberOfSet
+          ),
+          pointsAway: utils.getPointsAway(
+            resultJson,
+            numberOfMatch - 1,
+            prevNumberOfSet
+          ),
+        });
+        prevNumberOfSet = numberOfSet;
       } else if (isFinishedSet) {
         res.status(200).send({
-          isNewSet: isFinishedSet,
+          isNewSet: true,
           isNewSingleGame: false,
           nameHome: homePlayerName,
           nameAway: awayPlayerName,
