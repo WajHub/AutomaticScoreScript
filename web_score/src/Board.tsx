@@ -142,7 +142,7 @@ function Board() {
 
   return (
     <div className="container-fluid h-100 bg-light m-0 p-0 width-100 ">
-      <div className="row width-100 custom-height-85 m-0">
+      <div className="row width-100 h-100 m-0">
         <div className="col-6 p-0">
           {playerHomeOnTheLeft ? (
             <PlayerComponent player={playerHome} isHome={true} />
@@ -158,7 +158,7 @@ function Board() {
           )}
         </div>
       </div>
-      <div className="row custom-height-15 m-0 bg-dark align-items-center">
+      <div className="row  m-0 bg-dark align-items-center">
         <div className="col text-right">
           <button
             className="btn btn-secondary "
