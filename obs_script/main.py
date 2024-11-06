@@ -2,6 +2,8 @@ import obspython as obs
 import urllib.request
 from xml import etree
 import xmltodict, json
+import threading
+import time
 
 class Team:
     def __init__(self, score, name, sets, points):
@@ -71,6 +73,10 @@ counter_display_new_single_game = 0
 
 counter_display_new_set = 0
 
+responseXML = None
+
+update_thread = None
+
 # --------------------Script Functions------------------------------
 
 def script_properties():
@@ -100,7 +106,7 @@ def script_update(settings):
     set_idMatch(settings)
 
 def set_idMatch(settings):
-    global idMatch
+    global idMatch, is_running
     if is_running==False:
         idMatch = obs.obs_data_get_int(settings, "idMatch")
         print("Setting ID Match: ", idMatch)
@@ -108,35 +114,41 @@ def set_idMatch(settings):
         print("Cannot change ID Match while live score is running.")
 
 def start_live_score(props, prop):
-    global is_running
+    global is_running, update_thread
     is_running = True
+    update_thread = threading.Thread(target=thread_work_fetch_data)
+    update_thread.start()
+    print("TEST")
     print("Starting live score...")
 
 def stop_live_score(props, prop):
-    global is_running
+    global is_running, update_thread
     is_running = False
+    update_thread.join()
     print("Stopping live score...")
 
 # --------------------Functions--------------------------------------
 
-def update():
-    global is_running
-    if is_running:
-        data = load_data()
-        if "error" in data['tenis_stolowy']:
-            print("Error: ", data['tenis_stolowy']['error'])
-        if data['tenis_stolowy']['wynik']['duze_punkty_gosp'] == '':
-            print("Match not started yet.")
-        else: 
-            set_up(data)
+def thread_work_fetch_data():
+    global is_running,responseXML
+    while is_running:
+        url_match = URL+str(idMatch)
+        print("Thread_2 fetching data...")
+        responseXML = urllib.request.urlopen(url_match).read()
+        time.sleep(TIMER_TICK / 1000)  # Convert TIMER_TICK to seconds
 
-def load_data():
-    url_match = URL+str(idMatch)
-    print("Updating score... (IdMatch: ", idMatch, ")")
-    responseXML = urllib.request.urlopen(url_match).read()
-    contentDict = xmltodict.parse(responseXML)
-    print("Data loaded...")
-    return contentDict
+def update():
+    global is_running, responseXML
+    if is_running:
+        if responseXML is not None:
+            print("Parsing data...")
+            data = xmltodict.parse(responseXML)
+            if "error" in data['tenis_stolowy']:
+                print("Error: ", data['tenis_stolowy']['error'])
+            if data['tenis_stolowy']['wynik']['duze_punkty_gosp'] == '':
+                print("Match not started yet.")
+            else: 
+                set_up(data)
 
 def set_up(data):
     global prev_id_single_game, counter_display_new_single_game
