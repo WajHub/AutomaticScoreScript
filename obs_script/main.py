@@ -89,7 +89,9 @@ def script_properties():
     obs.obs_properties_add_button(props, "buttonStop", "Stop", stop_live_score)
     obs.obs_properties_add_int(props, "idMatch", "ID Match", 0, 100000, 1)
     obs.obs_properties_get(props, "idMatch")
+    obs.obs_properties_add_button(props, "author", "Autor: Hubert Wajda", lambda props, prop: None)
     return props
+
 
 def script_load(settings):
     """
@@ -118,7 +120,6 @@ def start_live_score(props, prop):
     is_running = True
     update_thread = threading.Thread(target=thread_work_fetch_data)
     update_thread.start()
-    print("TEST")
     print("Starting live score...")
 
 def stop_live_score(props, prop):
