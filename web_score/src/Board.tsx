@@ -13,17 +13,16 @@ function Board() {
     name: "",
     points: 0,
     sets: 0,
-    timeOut: false,
+    timeOut: JSON.parse(localStorage.getItem("homeTimeOut") || "false"),
   });
 
   const [playerAway, setPlayerAway] = useState<Player>({
     name: "",
     points: 0,
     sets: 0,
-    timeOut: false,
+    timeOut: JSON.parse(localStorage.getItem("awayTimeOut") || "false"),
   });
   const [playerHomeOnTheLeft, setPlayerHomeOnTheLeft] = useState(true);
-
   const [isFetchingPaused, setIsFetchingPaused] = useState(false);
 
   const { status, isLoading, isError, data, error } = useQuery({
@@ -42,7 +41,7 @@ function Board() {
 
   useEffect(() => {
     if (data) {
-      if (data.isNewSingleGame == true) {
+      if (data.isNewSingleGame) {
         console.log("New single game!");
         console.log(data);
         setIsFetchingPaused(true);
@@ -61,13 +60,16 @@ function Board() {
           sets: playerAway.sets,
           timeOut: playerAway.timeOut,
         });
-      } else if (data.isNewSet == true) {
+      } else if (data.isNewSet) {
         console.log("New set!");
         console.log(data);
         setIsFetchingPaused(true);
         setTimeout(() => {
           setIsFetchingPaused(false);
         }, 10000);
+        if (!isFetchingPaused) {
+          handleLocalStorage(playerHomeOnTheLeft ? "right" : "left");
+        }
         setPlayerHome({
           name: data.nameHome,
           points: data.pointsHome,
@@ -87,7 +89,6 @@ function Board() {
           sets: data.setHome,
           timeOut: playerHome.timeOut,
         });
-
         setPlayerAway({
           name: data.nameAway,
           points: data.pointsAway,
@@ -114,6 +115,15 @@ function Board() {
       } else if (sideHomePlayer === "right") {
         setPlayerHomeOnTheLeft(false);
       }
+
+      const homeTimeOut = JSON.parse(
+        localStorage.getItem("homeTimeOut") || "false"
+      );
+      const awayTimeOut = JSON.parse(
+        localStorage.getItem("awayTimeOut") || "false"
+      );
+      setPlayerHome((prev) => ({ ...prev, timeOut: homeTimeOut }));
+      setPlayerAway((prev) => ({ ...prev, timeOut: awayTimeOut }));
     };
 
     window.addEventListener("storage", handleStorageChange);
@@ -125,14 +135,34 @@ function Board() {
   }, []);
 
   const handleTimeOut = (side: string) => {
-    if (side == "left") {
-      if (playerHomeOnTheLeft)
-        setPlayerHome({ ...playerHome, timeOut: !playerHome.timeOut });
-      else setPlayerAway({ ...playerAway, timeOut: !playerAway.timeOut });
+    if (side === "left") {
+      if (playerHomeOnTheLeft) {
+        setPlayerHome((prev) => {
+          const newTimeOut = !prev.timeOut;
+          localStorage.setItem("homeTimeOut", JSON.stringify(newTimeOut));
+          return { ...prev, timeOut: newTimeOut };
+        });
+      } else {
+        setPlayerAway((prev) => {
+          const newTimeOut = !prev.timeOut;
+          localStorage.setItem("awayTimeOut", JSON.stringify(newTimeOut));
+          return { ...prev, timeOut: newTimeOut };
+        });
+      }
     } else {
-      if (playerHomeOnTheLeft)
-        setPlayerAway({ ...playerAway, timeOut: !playerAway.timeOut });
-      else setPlayerHome({ ...playerHome, timeOut: !playerHome.timeOut });
+      if (playerHomeOnTheLeft) {
+        setPlayerAway((prev) => {
+          const newTimeOut = !prev.timeOut;
+          localStorage.setItem("awayTimeOut", JSON.stringify(newTimeOut));
+          return { ...prev, timeOut: newTimeOut };
+        });
+      } else {
+        setPlayerHome((prev) => {
+          const newTimeOut = !prev.timeOut;
+          localStorage.setItem("homeTimeOut", JSON.stringify(newTimeOut));
+          return { ...prev, timeOut: newTimeOut };
+        });
+      }
     }
   };
 
@@ -141,8 +171,8 @@ function Board() {
   if (isError) return <span>Error:</span>;
 
   return (
-    <div className="container-fluid h-100 bg-light m-0 p-0 width-100 ">
-      <div className="row width-100 custom-height-85 m-0">
+    <div className="container-fluid h-100 bg-light m-0 p-0 width-100">
+      <div className="row width-100 h-100 m-0">
         <div className="col-6 p-0">
           {playerHomeOnTheLeft ? (
             <PlayerComponent player={playerHome} isHome={true} />
@@ -158,13 +188,11 @@ function Board() {
           )}
         </div>
       </div>
-      <div className="row custom-height-15 m-0 bg-dark align-items-center">
+      <div className="row m-0 bg-dark align-items-center">
         <div className="col text-right">
           <button
-            className="btn btn-secondary "
-            onClick={(e) => {
-              handleTimeOut("left");
-            }}
+            className="btn btn-secondary"
+            onClick={() => handleTimeOut("left")}
           >
             Time-Out
           </button>
@@ -172,23 +200,17 @@ function Board() {
         <div className="col text-center p-0">
           <button
             className="btn btn-primary"
-            onClick={(e) => {
-              if (playerHomeOnTheLeft) {
-                handleLocalStorage("right");
-              } else {
-                handleLocalStorage("left");
-              }
-            }}
+            onClick={() =>
+              handleLocalStorage(playerHomeOnTheLeft ? "right" : "left")
+            }
           >
             <i className="bi bi-arrow-repeat"></i>
-          </button>{" "}
+          </button>
         </div>
         <div className="col text-left">
           <button
-            className="btn btn-secondary "
-            onClick={(e) => {
-              handleTimeOut("right");
-            }}
+            className="btn btn-secondary"
+            onClick={() => handleTimeOut("right")}
           >
             Time-Out
           </button>

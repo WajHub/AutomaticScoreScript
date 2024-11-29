@@ -23,4 +23,10 @@ html, body, #root {
 .time_out {
   color: rgb(255, 242, 126);
   font-size: 1.5em;
+  color: rgb(255, 242, 126);
+  font-size: 4rem; /* Zwiększenie rozmiaru czcionki */
+    background-color: rgba(255, 0, 0, 0.5); /* Przezroczyste czerwone tło */
+    border: 5px solid #FF0000; /* Czerwona ramka */
+    padding: 20px; /* Dodanie odstępu wewnętrznego */
+    border-radius: 10px; /* Zaokrąglone rogi ramki */
 }
