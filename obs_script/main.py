@@ -83,6 +83,7 @@ def script_properties():
     obs.obs_properties_add_button(props, "buttonStop", "Stop", stop_live_score)
     obs.obs_properties_add_int(props, "idMatch", "ID Match", 0, 100000, 1)
     obs.obs_properties_get(props, "idMatch")
+    obs.obs_properties_add_button(props, "author", "Autor: Hubert Wajda", lambda props, prop: None)
     return props
 
 def script_load(settings):
